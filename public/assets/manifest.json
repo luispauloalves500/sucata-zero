@@ -1,0 +1,211 @@
+{
+  "version": 1,
+  "generated": "2026-11-16T11:06:53.591Z",
+  "assets": [
+    {
+      "id": "z01",
+      "url": "assets/robots/z01/z01.glb",
+      "bytes": 193764,
+      "triangles": 1548,
+      "meshes": 15,
+      "clips": [
+        "idle",
+        "idle2",
+        "walk",
+        "run",
+        "jump",
+        "fall",
+        "land",
+        "dodge",
+        "block",
+        "parry",
+        "atk1",
+        "atk2",
+        "atk3",
+        "claw",
+        "heavy",
+        "hit",
+        "death",
+        "getup",
+        "interact",
+        "victory",
+        "pull",
+        "equip"
+      ],
+      "heightMeters": 1.1,
+      "facingAxis": "+Z",
+      "license": "original (gerado por script, CC0 do projeto)"
+    },
+    {
+      "id": "parts",
+      "url": "assets/modules/parts-w01.glb",
+      "bytes": 817388,
+      "triangles": 36404,
+      "meshes": 189,
+      "clips": [],
+      "heightMeters": 1.01,
+      "facingAxis": "+Z",
+      "license": "original (gerado por script, CC0 do projeto)"
+    },
+    {
+      "id": "e01",
+      "url": "assets/robots/enemies/e01-catador.glb",
+      "bytes": 103984,
+      "triangles": 2936,
+      "meshes": 24,
+      "clips": [
+        "idle",
+        "walk",
+        "windup",
+        "attack",
+        "hit",
+        "stagger",
+        "death"
+      ],
+      "heightMeters": 0.64,
+      "facingAxis": "+Z",
+      "license": "original (gerado por script, CC0 do projeto)"
+    },
+    {
+      "id": "e02",
+      "url": "assets/robots/enemies/e02-patrulheiro.glb",
+      "bytes": 244928,
+      "triangles": 7542,
+      "meshes": 42,
+      "clips": [
+        "idle",
+        "walk",
+        "run",
+        "alert",
+        "windup",
+        "attack",
+        "charge_windup",
+        "charge",
+        "recover",
+        "hit",
+        "stagger",
+        "death"
+      ],
+      "heightMeters": 1.97,
+      "facingAxis": "+Z",
+      "license": "original (gerado por script, CC0 do projeto)"
+    },
+    {
+      "id": "e03",
+      "url": "assets/robots/enemies/e03-carregador.glb",
+      "bytes": 151760,
+      "triangles": 5960,
+      "meshes": 36,
+      "clips": [
+        "idle",
+        "walk",
+        "windup",
+        "attack",
+        "push",
+        "recover",
+        "hit",
+        "stagger",
+        "death"
+      ],
+      "heightMeters": 1.93,
+      "facingAxis": "+Z",
+      "license": "original (gerado por script, CC0 do projeto)"
+    },
+    {
+      "id": "e04",
+      "url": "assets/robots/enemies/e04-triturador.glb",
+      "bytes": 73680,
+      "triangles": 1936,
+      "meshes": 23,
+      "clips": [
+        "idle",
+        "walk",
+        "windup",
+        "attack",
+        "recover",
+        "hit",
+        "stagger",
+        "death"
+      ],
+      "heightMeters": 1.37,
+      "facingAxis": "+Z",
+      "license": "original (gerado por script, CC0 do projeto)"
+    },
+    {
+      "id": "e05",
+      "url": "assets/robots/enemies/e05-drone.glb",
+      "bytes": 148044,
+      "triangles": 5532,
+      "meshes": 26,
+      "clips": [
+        "idle",
+        "walk",
+        "windup",
+        "attack",
+        "hit",
+        "stagger",
+        "death"
+      ],
+      "heightMeters": 0.58,
+      "facingAxis": "+Z",
+      "license": "original (gerado por script, CC0 do projeto)"
+    },
+    {
+      "id": "b01",
+      "url": "assets/robots/bosses/b01-compactador.glb",
+      "bytes": 440976,
+      "triangles": 14764,
+      "meshes": 80,
+      "clips": [
+        "idle",
+        "walk",
+        "intro",
+        "stomp_w",
+        "stomp",
+        "swing_w",
+        "swing",
+        "sweep_w",
+        "sweep",
+        "charge_w",
+        "charge",
+        "stunned",
+        "slam_w",
+        "slam",
+        "hit",
+        "death"
+      ],
+      "heightMeters": 6.49,
+      "facingAxis": "+Z",
+      "license": "original (gerado por script, CC0 do projeto)"
+    },
+    {
+      "id": "ferro7",
+      "url": "assets/robots/npc/ferro7.glb",
+      "bytes": 167112,
+      "triangles": 6268,
+      "meshes": 28,
+      "clips": [
+        "idle",
+        "work",
+        "wave",
+        "trapped"
+      ],
+      "heightMeters": 2.41,
+      "facingAxis": "+Z",
+      "license": "original (gerado por script, CC0 do projeto)"
+    },
+    {
+      "id": "pixel",
+      "url": "assets/robots/npc/pixel.glb",
+      "bytes": 26192,
+      "triangles": 1014,
+      "meshes": 5,
+      "clips": [
+        "idle"
+      ],
+      "heightMeters": 0.31,
+      "facingAxis": "+Z",
+      "license": "original (gerado por script, CC0 do projeto)"
+    }
+  ]
+}
