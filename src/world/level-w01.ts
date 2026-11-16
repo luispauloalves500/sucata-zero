@@ -269,7 +269,7 @@ export function buildW01(scene: THREE.Scene, physics: Physics, quality: { propDe
     const obj = terminalObj(x, z, rotY, bench);
     const fx = Math.sin(rotY), fz = Math.cos(rotY);
     terminals.push({ id, name, pos: new THREE.Vector3(x, 0, z), respawn: new THREE.Vector3(x + fx * 2.2, 0.1, z + fz * 2.2), workshop, sector });
-    interact(id, 'terminal', x, 1.0, z, workshop === 'none' ? 'Terminal' : workshop === 'field' ? 'Bancada de campo' : 'Oficina', obj);
+    interact(id, 'terminal', x, 1.0, z, workshop === 'none' ? 'Terminal' : workshop === 'field' ? 'Bancada de campo' : 'Oficina', obj).radius = 2.8;
   };
 
   // =====================================================================

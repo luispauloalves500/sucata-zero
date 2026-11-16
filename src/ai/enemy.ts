@@ -245,7 +245,8 @@ export class Enemy implements Hurtable {
     if (def.flying) this.hover = 0;
     this.root.position.copy(this.pos);
     this.root.rotation.y = this.heading;
-    this.anim.update(dt);
+    this.root.visible = dist < 55;
+    if (this.root.visible) this.anim.update(dt);
   }
   private callFriends() {
     // Patrulheiro alerta outros num raio de 12 m

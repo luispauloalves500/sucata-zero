@@ -1148,6 +1148,7 @@ export class Game implements GameCtx {
       get mode() { return g.mode; },
       get errors() { return [...g.errors]; },
       get frames() { return g.frames; },
+      get time() { return g.time; },
       state: () => JSON.parse(JSON.stringify(g.state)),
       player: () => ({ x: g.player.pos.x, y: g.player.pos.y, z: g.player.pos.z, hp: g.player.hp, en: g.player.en, state: g.player.state, grounded: g.player.grounded, heading: g.player.heading, armR: g.player.robot.loadout.armR }),
       stats: () => ({ ...g.stats, abilities: [...g.stats.abilities] }),

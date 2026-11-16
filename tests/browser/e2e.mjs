@@ -26,10 +26,18 @@ async function open(viewport, mobile = false) {
   return { ctx, page, errs };
 }
 const S = (page, fn, arg) => page.evaluate(fn, arg);
-const wait = (page, ms) => page.waitForTimeout(ms);
+// espera em tempo de SIMULAÇÃO (headless/SwiftShader roda abaixo de 60 FPS) e também em tempo real
+const wait = async (page, ms) => {
+  const t0 = await S(page, () => __SZ.time);
+  await page.waitForTimeout(ms);
+  try { await page.waitForFunction(([t0, s]) => __SZ.mode !== 'play' || __SZ.time >= t0 + s, [t0, ms / 1000], { timeout: ms * 6 + 2000, polling: 50 }); } catch {}
+};
 const shot = (page, name) => page.screenshot({ path: `${SHOTS}/${name}.png` });
 const tp = (page, x, y, z, h = 0) => S(page, ([x, y, z, h]) => __SZ.teleport(x, y, z, h), [x, y, z, h]);
 const closeMenus = (page) => S(page, () => __SZ.closeMenus());
+const until = async (page, fn, arg, ms = 8000) => { try { await page.waitForFunction(fn, arg, { timeout: ms, polling: 100 }); return true; } catch { return false; } };
+process.on('uncaughtException', (e) => { console.log(results.join('\n')); console.log('EXCEÇÃO:', e); process.exit(1); });
+process.on('unhandledRejection', (e) => { console.log(results.join('\n')); console.log('EXCEÇÃO:', e); process.exit(1); });
 
 // ---------------------------------------------------------------- desktop
 {
@@ -59,10 +67,10 @@ const closeMenus = (page) => S(page, () => __SZ.closeMenus());
   await shot(page, '02-memoria');
   await closeMenus(page); await wait(page, 1600);
   ok('1-1: portão A abre', await S(page, () => __SZ.gate('gate_a')));
-  await tp(page, 0, 0.1, 13.6, 0); await wait(page, 400);
+  await tp(page, 0, 0.1, 13.6, 0); await until(page, () => __SZ.quest('1-1').state === 'complete');
   ok('1-1 concluída', (await S(page, () => __SZ.quest('1-1'))).state === 'complete');
   // 1-2
-  await tp(page, 0, 0.1, 18, 0); await wait(page, 800);
+  await tp(page, 0, 0.1, 18, 0); await until(page, () => __SZ.enemies().some((e) => e.tag === 'e02_quest'));
   const en = await S(page, () => __SZ.enemies());
   ok('1-2: Patrulheiro de missão aparece', en.some((e) => e.tag === 'e02_quest'));
   // combate real: ataque com garra contra o patrulheiro
@@ -80,7 +88,7 @@ const closeMenus = (page) => S(page, () => __SZ.closeMenus());
   await shot(page, '04-peca-no-chao');
   for (const d of drops.filter((x) => x.itemId !== 'P03')) { await tp(page, d.x, 0.1, d.z, 0); await wait(page, 250); }
   ok('1-2: Punho Rebitador coletado', (await S(page, () => __SZ.state())).inventory.parts.some((p) => p.itemId === 'P11'));
-  await tp(page, 12.3, 0.1, 51, -Math.PI / 2); await wait(page, 300);
+  await tp(page, 12.4, 0.1, 51, -Math.PI / 2); await wait(page, 300);
   ok('1-2: usar a bancada de campo', (await S(page, () => __SZ.interactNearest())) === 'term_field');
   await wait(page, 600);
   await closeMenus(page);
