@@ -48,7 +48,7 @@ Próximo marco: **Episódio 2 — Cidade Morta** (mundo 2 do GDD).
 - Problema e causa: n/a (ciclo de criação).
 - Arquivos alterados: projeto inteiro (`src/`, `tools/`, `public/assets/`, `tests/`, documentação, workflow do Pages).
 - Mudanças implementadas: motor (render ACES, perfis de qualidade, escala dinâmica, contexto perdido), física Rapier, câmera, input teclado/mouse/gamepad/toque, modelos GLB por script com animações, IA com FSM + A* e limite de atacantes, combate, 13 peças em 6 slots, oficina, 7 missões, chefe em 3 fases, PÍXEL e FERRO-7, memórias, áudio generativo, saves robustos, menus/opções, tela de erro técnico copiável.
-- Testes executados e resultados: `npm test` 20/20 ✔ (dano, inventário, oficina, missões, nível, saves, A*); `npm run validate` ✔; `npm run build` ✔; e2e Chromium headless desktop 1024×576 + mobile 844×390: todas as verificações ✔ (Episódio 1 do início à tela final, morte/renascimento, save/load, sem erros de console).
+- Testes executados e resultados: `npm test` 20/20 ✔ (dano, inventário, oficina, missões, nível, saves, A*); `npm run validate` ✔; `npm run build` ✔; e2e Chromium headless desktop 1280×720 + mobile 844×390: todas as verificações ✔ (Episódio 1 do início à tela final, morte/renascimento, save/load, sem erros de console).
 - Testes visuais / dispositivos: screenshots automáticos (título, combate, oficina antes/depois, chapa, triagem, emboscada, fabricação, chefe, guincho, final). Dispositivos reais: **não testado**.
 - Métricas reais: carregamento até o título ~1–2 s local; GLBs 2,4 MB no total; cena ~210 draw calls / ~38k triângulos (perfil médio). FPS em hardware real: **não medido**.
 - Regressões: nenhuma conhecida.
