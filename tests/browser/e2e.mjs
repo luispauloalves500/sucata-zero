@@ -83,6 +83,7 @@ process.on('unhandledRejection', (e) => { console.log(results.join('\n')); conso
   await shot(page, '03-combate-garra');
   await S(page, () => __SZ.damageEnemyTag('e02_quest', 999)); await wait(page, 900);
   ok('1-2: patrulheiro derrotado', (await S(page, () => __SZ.quest('1-2'))).stage >= 2);
+  await until(page, () => { const d = __SZ.drops(); return d.some((x) => x.itemId === 'P11') && d.some((x) => x.itemId === 'P02'); });
   const drops = await S(page, () => __SZ.drops());
   ok('1-2: peças P11 e P02 caem', drops.some((d) => d.itemId === 'P11') && drops.some((d) => d.itemId === 'P02'));
   await shot(page, '04-peca-no-chao');
