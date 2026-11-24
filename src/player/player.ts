@@ -10,6 +10,7 @@ import { clamp, damp, dampAngle, wrapAngle } from '../core/math';
 export type PState = 'idle' | 'move' | 'jump' | 'fall' | 'land' | 'dodge' | 'attack' | 'block' | 'parry' | 'hit' | 'stagger' | 'interact' | 'pull' | 'equip' | 'disabled' | 'cutscene';
 
 const RADIUS = 0.32, HALF = 0.48; // cápsula total 1.6 m
+const KCC_OFFSET = 0.02; // folga do controlador de personagem (a cápsula fica 2 cm acima do piso)
 const GRAVITY = 24;
 const WALK = 4.5, SPRINT = 7;
 
@@ -40,6 +41,9 @@ export class Player {
   cable: THREE.Line;
   conveyorPush = new THREE.Vector3();
   respawnInvuln = 0;
+  /** posição no passo físico anterior (interpolação de render) */
+  prevPos = new THREE.Vector3();
+  private visY = 0;
   private tmp = new THREE.Vector3(); private tmp2 = new THREE.Vector3();
 
   constructor(private ctx: GameCtx, assets: import('../engine/assets').Assets, spawn: THREE.Vector3) {
@@ -48,13 +52,13 @@ export class Player {
     const P = ctx.physics;
     this.body = P.world.createRigidBody(P.R.RigidBodyDesc.kinematicPositionBased().setTranslation(spawn.x, spawn.y + HALF + RADIUS, spawn.z));
     this.col = P.world.createCollider(P.R.ColliderDesc.capsule(HALF, RADIUS), this.body);
-    this.kcc = P.world.createCharacterController(0.02);
+    this.kcc = P.world.createCharacterController(KCC_OFFSET);
     this.kcc.enableAutostep(0.36, 0.25, false);
     this.kcc.enableSnapToGround(0.35);
     this.kcc.setMaxSlopeClimbAngle((52 * Math.PI) / 180);
     this.kcc.setMinSlopeSlideAngle((60 * Math.PI) / 180);
     this.kcc.setApplyImpulsesToDynamicBodies(false);
-    this.pos.copy(spawn);
+    this.pos.copy(spawn); this.prevPos.copy(spawn);
     const cg = new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(), new THREE.Vector3(0, 0, 1)]);
     this.cable = new THREE.Line(cg, new THREE.LineBasicMaterial({ color: 0x39f0ff }));
     this.cable.visible = false; this.cable.frustumCulled = false;
@@ -64,7 +68,7 @@ export class Player {
   teleport(p: THREE.Vector3, heading?: number) {
     this.body.setTranslation({ x: p.x, y: p.y + HALF + RADIUS + 0.05, z: p.z }, true);
     this.body.setNextKinematicTranslation({ x: p.x, y: p.y + HALF + RADIUS + 0.05, z: p.z });
-    this.pos.copy(p); this.vel.set(0, 0, 0);
+    this.pos.copy(p); this.prevPos.copy(p); this.visY = p.y; this.vel.set(0, 0, 0);
     this.fallStartY = p.y;
     if (heading !== undefined) this.heading = heading;
     this.robot.root.position.copy(p); this.robot.root.rotation.y = this.heading;
@@ -82,6 +86,7 @@ export class Player {
   }
 
   fixedUpdate(dt: number) {
+    this.prevPos.copy(this.pos);
     const { input, cam, stats } = this.ctx;
     this.stateT += dt;
     this.abilityCd = Math.max(0, this.abilityCd - dt);
@@ -188,7 +193,9 @@ export class Player {
     }
     // gravidade
     this.vel.y -= GRAVITY * dt;
-    if (this.grounded && this.vel.y < 0) this.vel.y = -2;
+    // no chão não empurramos a cápsula para baixo: o snap-to-ground do KCC cola nas descidas. Empurrar contra o
+    // chão fazia o Rapier zerar o deslocamento horizontal em passos aleatórios (o "engasgo" ao andar).
+    if (this.grounded && this.vel.y < 0) this.vel.y = 0;
     this.vel.x = horiz.x; this.vel.z = horiz.z;
 
     // esteiras
@@ -411,9 +418,18 @@ export class Player {
     setTimeout(() => { if (this.state === 'equip') { this.setState('idle'); this.robot.release(0.25); } }, 1200);
   }
   /** visual: interpolação simples por quadro */
-  render(dt: number) {
+  /** alpha = fração do passo físico já acumulada; interpola entre os dois últimos passos para não tremer */
+  render(dt: number, alpha = 1) {
     const root = this.robot.root;
-    root.position.lerp(this.pos, 1 - Math.exp(-30 * dt));
+    root.position.lerpVectors(this.prevPos, this.pos, Math.min(1, Math.max(0, alpha)));
+    // altura visual: no chão o KCC flutua ~2 cm (offset) e tem ruído de 1–2 cm entre passos; filtra só esse ruído
+    // (atraso limitado a 3 cm, para rampas e degraus continuarem colados) e assenta o robô no piso
+    if (this.grounded) {
+      const target = root.position.y - KCC_OFFSET;
+      const k = 1 - Math.exp(-30 * dt);
+      this.visY = Math.min(target + 0.03, Math.max(target - 0.03, this.visY + (target - this.visY) * k));
+      root.position.y = this.visY;
+    } else this.visY = root.position.y;
     root.rotation.y = this.heading;
     this.robot.update(dt, this.state === 'move' || this.state === 'idle' || this.state === 'block' ? this.lastSpeed : 0, this.grounded);
     // olhos piscam vermelhos ao levar dano

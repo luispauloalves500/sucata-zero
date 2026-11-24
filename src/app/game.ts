@@ -65,6 +65,8 @@ export class Game implements GameCtx {
   padPrev: boolean[] = [];
   container: HTMLElement;
   frames = 0;
+  /** gravação de movimento para o teste de suavidade (desligada por padrão) */
+  trace: { steps: number[][]; frames: number[][] } | null = null;
   beacon!: Beacon; sideBeacons: Beacon[] = [];
 
   constructor(container: HTMLElement) { this.container = container; }
@@ -1004,6 +1006,7 @@ export class Game implements GameCtx {
     P.conveyorPush.set(0, 0, 0);
     for (const c of this.level.conveyors) if (P.grounded && c.contains(P.pos)) P.conveyorPush.copy(c.push);
     P.fixedUpdate(dt);
+    if (this.trace) this.trace.steps.push([this.time, P.pos.x, P.pos.y, P.pos.z, P.grounded ? 1 : 0, Math.hypot(P.vel.x, P.vel.z), P.busy ? 1 : 0]);
     if (P.pos.y < -15) { const t = this.level.terminals.find((x) => x.id === this.state.checkpointId) ?? this.level.terminals[0]; P.teleport(t.respawn); }
     for (const pr of this.level.presses) {
       pr.update(dt);
@@ -1068,7 +1071,7 @@ export class Game implements GameCtx {
   render(dt: number) {
     const P = this.player;
     const realDt = this.frameDt;
-    if (this.mode !== 'pause') P.render(dt);
+    if (this.mode !== 'pause') P.render(dt, this.mode === 'play' || this.mode === 'dead' ? this.acc * 60 : 1);
     const f = P.forward(), r = new THREE.Vector3(-f.z, 0, f.x);
     const want = new THREE.Vector3(P.pos.x - r.x * 0.9 - f.x * 0.6, P.pos.y + 2.05 + Math.sin(this.time * 2) * 0.12, P.pos.z - r.z * 0.9 - f.z * 0.6);
     this.pixel.pos.lerp(want, 1 - Math.exp(-4 * realDt));
@@ -1092,6 +1095,7 @@ export class Game implements GameCtx {
     if (this.mode === 'play' || this.mode === 'dead') { this.fx.update(dt); this.tele.update(dt); this.ambientFx(dt); }
     this.audio.update(realDt);
     if (this.mode === 'play' || this.mode === 'dead') this.updateHud(realDt);
+    if (this.trace) { const rp = P.robot.root.position; this.trace.frames.push([(this.time + this.acc - 1 / 60) * 1000, rp.x, rp.y, rp.z, this.cam.cam.position.x, this.cam.cam.position.z]); }
     this.renderer.render(this.scene, this.cam.cam, this.time);
   }
   ambT = 0;
@@ -1232,6 +1236,8 @@ export class Game implements GameCtx {
       drops: () => g.loot.drops.map((d) => ({ itemId: d.itemId, x: d.pos.x, z: d.pos.z })),
       press: (action: string, ms = 80) => { g.input.setAction(action as any, true); setTimeout(() => g.input.setAction(action as any, false), ms); },
       move: (x: number, y: number) => { g.input.virtualMove = { x, y, active: x !== 0 || y !== 0 }; },
+      traceStart: () => { g.trace = { steps: [], frames: [] }; },
+      traceStop: () => { const t = g.trace; g.trace = null; return t; },
       screen: () => document.querySelector('#screens .screen:last-child')?.className ?? '',
     };
   }

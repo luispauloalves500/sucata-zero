@@ -90,7 +90,7 @@ export function buildW01(scene: THREE.Scene, physics: Physics, quality: { propDe
   ground.rotation.x = -Math.PI / 2; ground.position.set(0, 0, 110); ground.receiveShadow = true;
   (mats.ground.map as THREE.Texture).repeat.set(120, 120);
   scene.add(ground);
-  physics.addBox(0, -0.5, 110, 300, 0.5, 300);
+  physics.addGround(0, 110, 600, 600);
 
   // ---------------- primitivas de cenário ----------------
   const CW = 6.06, CH = 2.6, CD = 2.44;

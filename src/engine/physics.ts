@@ -20,6 +20,17 @@ export class Physics {
     this.staticIds.add(c.handle);
     return c;
   }
+  /**
+   * Chão plano (topo em y). Usa heightfield em vez de um cuboide gigante: o controlador de personagem do Rapier
+   * perde precisão contra cuboides enormes (a cápsula afunda alguns cm e trava a cada poucos passos).
+   */
+  addGround(cx: number, cz: number, sx: number, sz: number, y = 0): RAPIER.Collider {
+    const n = 8;
+    const d = this.R.ColliderDesc.heightfield(n, n, new Float32Array((n + 1) * (n + 1)), { x: sx, y: 1, z: sz }).setTranslation(cx, y, cz).setFriction(0.6);
+    const c = this.world.createCollider(d);
+    this.staticIds.add(c.handle);
+    return c;
+  }
   /** caixa inclinada (rampa) em torno do eixo X local após rotY */
   addRamp(x: number, y: number, z: number, hx: number, hy: number, hz: number, rotY: number, pitch: number): RAPIER.Collider {
     const q1 = { x: Math.sin(pitch / 2), y: 0, z: 0, w: Math.cos(pitch / 2) };
