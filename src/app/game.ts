@@ -8,6 +8,7 @@ import { Input } from '../input/input';
 import { TouchControls } from '../input/touch';
 import { AudioManager } from '../audio/audio';
 import { Particles, Telegraphs } from '../fx/particles';
+import { Beacon } from '../fx/beacon';
 import { EventBus } from '../core/events';
 import { newGame, type GameState } from '../game/state';
 import { computeStats, equip as doEquip, unequip as doUnequip, craft as doCraft, upgrade as doUpgrade, dismantle as doDismantle, findPart, grantPart, grantMaterials, type Stats } from '../items/inventory';
@@ -63,6 +64,7 @@ export class Game implements GameCtx {
   padPrev: boolean[] = [];
   container: HTMLElement;
   frames = 0;
+  beacon!: Beacon; sideBeacons: Beacon[] = [];
 
   constructor(container: HTMLElement) { this.container = container; }
 
@@ -94,6 +96,8 @@ export class Game implements GameCtx {
       this.level = buildW01(this.scene, this.physics, { propDensity: prof.propDensity, shadows: prof.shadows, shadowSize: prof.shadowSize, drawDistance: prof.drawDistance });
       this.fx = new Particles(this.scene); this.fx.density = prof.particles;
       this.tele = new Telegraphs(this.scene);
+      this.beacon = new Beacon(this.scene, 0xffa62b, 18);
+      for (let i = 0; i < 4; i++) this.sideBeacons.push(new Beacon(this.scene, 0x39f0ff, 9));
       this.loot = new Loot(this.scene, this.assets);
       this.player = new Player(this, this.assets, new THREE.Vector3(-3, 0.5, -9.5));
       this.makeNpcs();
@@ -336,6 +340,8 @@ export class Game implements GameCtx {
     if (free && cageCol) { this.physics.remove(cageCol); L.cage.userData.col = null; }
     if (free) { this.ferro.root.position.set(-8.6, 0, 158.2); this.ferro.root.rotation.y = -0.6; this.ferro.anim.play('work', { loop: true }); }
     else { this.ferro.root.position.set(0, 0.25, 163); this.ferro.root.rotation.y = Math.PI; this.ferro.anim.play('trapped', { loop: true }); }
+    const hook = this.scene.getObjectByName('craneHook');
+    if (hook) { hook.userData.y0 ??= hook.position.y; hook.position.y = this.flag('used:crane_lever') ? hook.userData.y0 - 5.4 : hook.userData.y0; }
     const open = this.flag('used:anchor_gate');
     L.anchorDoors.forEach((d, i) => { d.rotation.y = open ? (i === 0 ? -1.9 : 1.9) : 0; const c = d.userData.col; if (open && c) { this.physics.remove(c); d.userData.col = null; } });
   }
@@ -582,7 +588,7 @@ export class Game implements GameCtx {
         this.player.playInteract(1); use();
         this.audio.play('servo'); this.audio.play('gate');
         const hook = this.scene.getObjectByName('craneHook');
-        if (hook) { const t0 = performance.now(); const y0 = hook.position.y; const a = () => { const k = Math.min(1, (performance.now() - t0) / 2200); hook.position.y = y0 - k * 5.4; if (k < 1) requestAnimationFrame(a); else { this.audio.play('stomp'); this.shake(0.4); this.fx.burst('dust', new THREE.Vector3(hook.position.x, 0.3, hook.position.z), 30); } }; a(); }
+        if (hook) { const t0 = performance.now(); hook.userData.y0 ??= hook.position.y; const y0 = hook.userData.y0; const a = () => { const k = Math.min(1, (performance.now() - t0) / 2200); hook.position.y = y0 - k * 5.4; if (k < 1) requestAnimationFrame(a); else { this.audio.play('stomp'); this.shake(0.4); this.fx.burst('dust', new THREE.Vector3(hook.position.x, 0.3, hook.position.z), 30); } }; a(); }
         this.quest({ type: 'interact', id: it.id });
         this.hud.toast('O guindaste soltou um contêiner: dentro, o projeto do Martelo de Prensa!', 'loot');
         return;
@@ -1074,6 +1080,9 @@ export class Game implements GameCtx {
     this.cam.lockTarget = P.lockTarget ? P.lockTarget.lockPoint(new THREE.Vector3()) : null;
     this.cam.update(realDt, P.robot.root.position, this.physics, P.heading, P.lastSpeed > 0.5);
     (this.scene.userData as any).camPos = this.cam.cam.position;
+    // evita ver o interior do modelo quando a câmera encosta no Z-01
+    const camNear = this.cam.override ? 99 : this.cam.cam.position.distanceTo(this.tmp.copy(P.robot.root.position).setY(P.robot.root.position.y + 1.2));
+    P.robot.root.visible = camNear > 0.95;
     const sun = this.level.sun, c = this.cam.focus;
     sun.position.set(c.x - 30, c.y + 45, c.z + 40); sun.target.position.set(c.x, 0, c.z); sun.target.updateMatrixWorld();
     for (const a of this.level.animated) a.fn(a.obj, this.time + (this.mode === 'title' ? performance.now() / 1000 : 0));
@@ -1088,6 +1097,11 @@ export class Game implements GameCtx {
     if (key === 'drop') return this.loot.drops.find((d) => !d.grantId.includes('P03') && !d.grantId.includes('P18'))?.pos ?? null;
     if (key === 'e02_quest') return this.enemies.find((e) => e.spawn.questTag === 'e02_quest' && e.alive)?.pos ?? this.level.markers.get('r_yard') ?? null;
     if (key === 'boss') return this.boss?.pos ?? this.level.bossCenter;
+    if (key === 'tool') {
+      const left = this.level.interactables.filter((i) => i.kind === 'tool' && !i.used);
+      left.sort((a, b) => a.pos.distanceTo(p) - b.pos.distanceTo(p));
+      return left[0]?.pos ?? null;
+    }
     if (key === 'cond') {
       const left = this.level.interactables.filter((i) => i.kind === 'conductor' && !i.used);
       left.sort((a, b) => a.pos.distanceTo(p) - b.pos.distanceTo(p));
@@ -1095,27 +1109,45 @@ export class Game implements GameCtx {
     }
     return this.level.markers.get(key) ?? null;
   }
+  objectiveBeacon(wp: THREE.Vector3 | null) {
+    const P = this.player, dt = this.frameDt;
+    this.beacon.update(wp, wp ? Math.hypot(wp.x - P.pos.x, wp.z - P.pos.z) : 0, dt, this.time);
+    // feixes ciano nos objetos das tarefas secundárias ativas
+    const side = this.interactables().filter((i) => i.kind === 'tool' || i.kind === 'lever');
+    this.sideBeacons.forEach((b, i) => { const it = side[i]; b.update(it ? it.pos : null, it ? Math.hypot(it.pos.x - P.pos.x, it.pos.z - P.pos.z) : 0, dt, this.time); });
+  }
   updateHud(dt: number) {
     const P = this.player, s = this.state;
     const mq = mainQuest(s); const st = mq ? questStage(s, mq.id) : null;
     let text = st?.text ?? '';
     if (st?.type === 'count' && mq) text += ` (${countProgress(s, mq.id, st.id)}/${st.count})`;
     const side = activeQuests(s).filter((q) => q.kind === 'side').map((q) => { const ss = questStage(s, q.id); return `◇ ${q.title}${ss?.type === 'count' ? ` (${countProgress(s, q.id, ss.id)}/${ss.count})` : ''}`; }).join('\n');
-    let waypoint: HudFrame['waypoint'] = null;
-    const wp = st?.waypoint ? this.waypointPos(st.waypoint) : null;
-    if (wp) {
+    const touchUi = isTouchDevice();
+    const place = (wp: THREE.Vector3 | null, minDist: number, maxDist = 1e9): HudFrame['waypoint'] => {
+      if (!wp) return null;
       const pt = wp.clone(); pt.y = Math.max(pt.y, 0) + 1.6;
       const pr = this.project(pt); const dist = Math.hypot(wp.x - P.pos.x, wp.z - P.pos.z);
-      if (dist > 2.5) {
-        if (pr.on && pr.z < 1) waypoint = { x: pr.x, y: pr.y, on: true, ang: 0, dist };
-        else {
-          let nx = pr.nx, ny = pr.ny; if (pr.z > 1) { nx = -nx; ny = -ny; }
-          const ang = Math.atan2(-ny, nx);
-          const m = 0.86, k = Math.min(m / Math.max(1e-3, Math.abs(Math.cos(ang))), m / Math.max(1e-3, Math.abs(Math.sin(ang))));
-          waypoint = { x: (Math.cos(ang) * k * 0.5 + 0.5) * innerWidth, y: (Math.sin(ang) * k * 0.5 + 0.5) * innerHeight, on: false, ang, dist };
-        }
-      }
+      if (dist <= minDist || dist > maxDist) return null;
+      // área segura: não cobre barras (topo-esquerda), objetivo (topo-direita) nem controles de toque (base)
+      const top = touchUi ? 0.2 : 0.14, bot = touchUi ? 0.62 : 0.86;
+      if (pr.on && pr.z < 1) return { x: pr.x, y: clamp(pr.y, innerHeight * 0.06, innerHeight * bot), on: true, ang: 0, dist };
+      let nx = pr.nx, ny = pr.ny; if (pr.z > 1) { nx = -nx; ny = -ny; }
+      const ang = Math.atan2(-ny, nx);
+      const m = 0.86, k = Math.min(m / Math.max(1e-3, Math.abs(Math.cos(ang))), m / Math.max(1e-3, Math.abs(Math.sin(ang))));
+      const y = clamp((Math.sin(ang) * k * 0.5 + 0.5) * innerHeight, innerHeight * top, innerHeight * bot);
+      return { x: (Math.cos(ang) * k * 0.5 + 0.5) * innerWidth, y, on: false, ang, dist };
+    };
+    const waypoint = place(st?.waypoint ? this.waypointPos(st.waypoint) : null, 2.5);
+    this.objectiveBeacon(st?.waypoint && !this.bossFight ? this.waypointPos(st.waypoint) : null);
+    // tarefa secundária mais próxima (marcador ciano)
+    let sideWp: THREE.Vector3 | null = null, sd = 1e9;
+    for (const q of activeQuests(s)) {
+      if (q.kind !== 'side') continue;
+      const ss = questStage(s, q.id); if (!ss?.waypoint) continue;
+      const v = this.waypointPos(ss.waypoint); if (!v) continue;
+      const d = v.distanceTo(P.pos); if (d < sd) { sd = d; sideWp = v; }
     }
+    const sideWaypoint = place(sideWp, 2.5, 70);
     let lock: HudFrame['lock'] = null;
     if (P.lockTarget) { const pr = this.project(P.lockTarget.lockPoint(new THREE.Vector3())); if (pr.on) lock = { x: pr.x, y: pr.y, hp: P.lockTarget.hpFrac(), name: P.lockTarget.name }; }
     const bars: HudFrame['bars'] = [];
@@ -1135,7 +1167,7 @@ export class Game implements GameCtx {
       hp: P.hp, hpMax: this.stats.hpMax, en: P.en, enMax: this.stats.enMax, heat: P.heat, heatLock: P.heat >= 99, stab: P.stab,
       level: s.player.level, xpFrac: s.player.xp / xpToNext(s.player.level), scrap: s.inventory.materials.scrap, alloy: s.inventory.materials.alloy, cells: s.inventory.materials.cells,
       objective: mq ? { title: mq.title, text, side } : side ? { title: 'Tarefas', text: '', side } : null,
-      waypoint, lock, bars, boss: b, prompt: it && !touch ? { key: pk, label: it.label } : null,
+      waypoint, sideWaypoint, lock, bars, boss: b, prompt: it && !touch ? { key: pk, label: it.label } : null,
       ability: this.stats.abilities.has('winch') ? { name: 'Guincho', cd: P.abilityCd / 3, ready: P.abilityCd <= 0 } : null,
       hurt: P.hurtFlash * (this.settings.reduceFlashes ? 0.4 : 0.8), lowHp: P.hp / this.stats.hpMax < 0.25 && P.alive, fps: this.fpsAcc.txt, touch,
     }, dt);

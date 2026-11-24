@@ -20,6 +20,8 @@ export class CameraRig {
   private lookAt = new THREE.Vector3();
   fovBase = 65;
   extraDist = 0;
+  /** 0 = distância normal, 1 = câmera colada no personagem */
+  closeness = 0;
 
   constructor(aspect: number) {
     this.cam = new THREE.PerspectiveCamera(65, aspect, 0.08, 400);
@@ -59,7 +61,10 @@ export class CameraRig {
     }
     // aproxima rápido ao colidir, recupera devagar
     this.curDist = want < this.curDist ? damp(this.curDist, want, 30, dt) : damp(this.curDist, want, 3, dt);
+    // muito perto (parede atrás): sobe a câmera por cima do ombro em vez de entrar no personagem
+    this.closeness = clamp(1 - (this.curDist - 0.6) / Math.max(0.1, dist * 0.45 - 0.6), 0, 1);
     const pos = pivot.clone().addScaledVector(back, this.curDist);
+    pos.y += this.closeness * 0.75;
     this.lookAt.copy(pivot).addScaledVector(back, -6);
     if (this.lockTarget) this.lookAt.lerp(this.lockTarget, 0.25);
     if (this.override) {

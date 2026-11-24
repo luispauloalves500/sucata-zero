@@ -45,6 +45,9 @@ kbd { display: inline-block; min-width: 1.6em; padding: 1px 6px; border: 1px sol
 .hud-way { position: absolute; left: 0; top: 0; width: 0; height: 0; }
 .hud-way .arrow { position: absolute; left: -11px; top: -26px; width: 0; height: 0; border-left: 11px solid transparent; border-right: 11px solid transparent; border-bottom: 16px solid var(--amber); filter: drop-shadow(0 0 6px rgba(255,166,43,.8)); }
 .hud-way span { position: absolute; left: -30px; top: 2px; width: 60px; text-align: center; font-size: .8em; font-weight: 700; color: var(--amber2); text-shadow: 0 1px 2px #000; }
+.hud-way.side .arrow { left: -8px; top: -20px; border-left-width: 8px; border-right-width: 8px; border-bottom: 12px solid var(--teal); filter: drop-shadow(0 0 6px rgba(57,240,255,.8)); }
+.hud-way.side .arrow.dia { border: 0; width: 12px; height: 12px; left: -6px; top: -18px; background: var(--teal); transform: rotate(45deg); }
+.hud-way.side span { color: var(--teal); font-size: .7em; }
 .hud-lock { position: absolute; left: 0; top: 0; }
 .hud-lock .ret { position: absolute; left: -18px; top: -18px; width: 36px; height: 36px; border: 2px solid var(--red); border-radius: 50%; box-shadow: 0 0 10px rgba(255,59,47,.7); animation: spin 3s linear infinite; border-style: dashed; }
 .hud-lock .nm { position: absolute; left: -80px; top: -48px; width: 160px; text-align: center; font-size: .78em; font-weight: 700; text-shadow: 0 1px 2px #000; }
@@ -205,7 +208,7 @@ kbd { display: inline-block; min-width: 1.6em; padding: 1px 6px; border: 1px sol
 .tb-pause { right: auto; left: calc(50% - 22px); top: calc(8px + var(--safe-t)); width: 44px; height: 44px; font-size: .9em; }
 body.touch .hud-obj { width: 15em; font-size: .9em; }
 body.touch .hud-toasts { bottom: calc(40% + var(--safe-b)); }
-body.touch .hud-say { bottom: auto; top: 26%; }
+body.touch .hud-say { bottom: calc(3% + var(--safe-b)); max-width: 44vw; font-size: calc(.92em * var(--sub-scale)); padding: 5px 12px; }
 body.touch #hud { font-size: calc(13px * var(--hud-scale)); }
 body.touch .workshop { padding-left: 30vw; }
 @media (max-height: 480px) { .screen h2 { font-size: 1.3em; margin-bottom: 6px; } .mbtn { padding: 7px 12px; font-size: .95em; } .menu { gap: 5px; } .logo span { font-size: 2.2em; } .logo b { font-size: 3em; } .wgrid { grid-template-columns: 1fr 1fr 1.3fr; font-size: .86em; } }

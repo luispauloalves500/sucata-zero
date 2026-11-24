@@ -4,6 +4,7 @@ export interface HudFrame {
   level: number; xpFrac: number; scrap: number; alloy: number; cells: number;
   objective: { title: string; text: string; side?: string } | null;
   waypoint: { x: number; y: number; on: boolean; ang: number; dist: number } | null;
+  sideWaypoint?: { x: number; y: number; on: boolean; ang: number; dist: number } | null;
   lock: { x: number; y: number; hp: number; name: string } | null;
   bars: { x: number; y: number; hp: number; key: string }[];
   boss: { name: string; frac: number; phase: number; exposed: boolean } | null;
@@ -41,6 +42,7 @@ export class Hud {
       <div class="hud-mats"><span class="m-scrap" title="Sucata">⬢ <b>0</b></span><span class="m-alloy" title="Liga">◆ <b>0</b></span><span class="m-cells" title="Células">▮ <b>0</b></span></div>
       <div class="hud-obj"><div class="t"></div><div class="x"></div><div class="s"></div></div>
       <div class="hud-way"><div class="arrow"></div><span></span></div>
+      <div class="hud-way side"><div class="arrow"></div><span></span></div>
       <div class="hud-lock"><div class="ret"></div><div class="nm"></div><div class="hpb"><i></i></div></div>
       <div class="hud-boss"><div class="nm"></div><div class="bb"><i class="lag"></i><i class="fill"></i><s style="left:70%"></s><s style="left:35%"></s></div><div class="ph"></div></div>
       <div class="hud-prompt"><kbd></kbd><span></span></div>
@@ -99,6 +101,17 @@ export class Hud {
       this.set('wt', w, 'transform', `translate(${wp.x.toFixed(0)}px, ${wp.y.toFixed(0)}px)`);
       this.set('wa', $(w, '.arrow'), 'transform', wp.on ? 'rotate(180deg)' : `rotate(${(wp.ang * 180 / Math.PI + 90).toFixed(0)}deg)`);
       this.set('wdist', $(w, 'span'), 'text', `${Math.round(wp.dist)} m`);
+    }
+    // marcador secundário (tarefas)
+    const sw = $(r, '.hud-way.side');
+    const sp = f.sideWaypoint ?? null;
+    this.set('swd', sw, 'display', sp ? '' : 'none');
+    if (sp) {
+      this.set('swt', sw, 'transform', `translate(${sp.x.toFixed(0)}px, ${sp.y.toFixed(0)}px)`);
+      const a = $(sw, '.arrow');
+      this.set('swc', a, 'cls', sp.on ? 'arrow dia' : 'arrow');
+      this.set('swa', a, 'transform', sp.on ? 'rotate(45deg)' : `rotate(${(sp.ang * 180 / Math.PI + 90).toFixed(0)}deg)`);
+      this.set('swdist', $(sw, 'span'), 'text', `${Math.round(sp.dist)} m`);
     }
     // trava
     const l = this.el['hud-lock'];
