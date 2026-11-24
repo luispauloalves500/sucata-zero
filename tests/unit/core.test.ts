@@ -141,3 +141,31 @@ describe('navegação', () => {
     for (const [x, z] of p!) expect(g.walkable(x, z)).toBe(true);
   });
 });
+
+describe('tarefas secundárias', () => {
+  const unlockSides = () => {
+    const s = newGame('standard');
+    for (const id of ['1-1', '1-2', '1-3', '1-4']) s.quests[id] = { state: 'complete', stage: 99 } as any;
+    s.quests['S01'] = { state: 'active', stage: 0 } as any; s.quests['S02'] = { state: 'active', stage: 0 } as any;
+    return s;
+  };
+  it('S01 conta 3 ferramentas distintas (repetir não conta) e dá capacidade', () => {
+    const s = unlockSides();
+    const cap0 = s.capacityBonus;
+    questEvent(s, { type: 'interact', id: 'tool_1' }); questEvent(s, { type: 'interact', id: 'tool_1' });
+    expect(s.quests['S01'].state).toBe('active');
+    questEvent(s, { type: 'interact', id: 'tool_2' });
+    const u = questEvent(s, { type: 'interact', id: 'tool_3' });
+    expect(s.quests['S01'].state).toBe('complete');
+    expect(u.rewards?.some((r) => r.quest === 'S01')).toBe(true);
+    expect(s.capacityBonus).toBe(cap0 + 10);
+  });
+  it('S02 libera o projeto do Martelo de Prensa (P12) uma única vez', () => {
+    const s = unlockSides();
+    questEvent(s, { type: 'interact', id: 'crane_lever' });
+    expect(s.quests['S02'].state).toBe('complete');
+    expect(s.blueprints.filter((b) => b === 'P12').length).toBe(1);
+    questEvent(s, { type: 'interact', id: 'crane_lever' });
+    expect(s.blueprints.filter((b) => b === 'P12').length).toBe(1);
+  });
+});
