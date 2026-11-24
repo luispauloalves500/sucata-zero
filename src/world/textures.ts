@@ -34,7 +34,7 @@ function blotches(ctx: CanvasRenderingContext2D, w: number, h: number, n: number
   ctx.globalAlpha = 1;
 }
 
-export interface TexSet { ground: THREE.Texture; containers: THREE.Texture[]; plate: THREE.Texture; concrete: THREE.Texture; hazard: THREE.Texture; belt: THREE.Texture; rustPanel: THREE.Texture; crack: THREE.Texture; sky: THREE.Texture; grime: THREE.Texture }
+export interface TexSet { slab: THREE.Texture; macro: THREE.Texture; ground: THREE.Texture; containers: THREE.Texture[]; plate: THREE.Texture; concrete: THREE.Texture; hazard: THREE.Texture; belt: THREE.Texture; rustPanel: THREE.Texture; crack: THREE.Texture; sky: THREE.Texture; grime: THREE.Texture }
 
 export function makeTextures(): TexSet {
   // chão de areia/terra com manchas de ferrugem e óleo
@@ -128,5 +128,26 @@ export function makeTextures(): TexSet {
   blotches(c, 128, 128, 20, ['#8a7a6a', '#b0a090'], 5, 30, 24, 0.5);
   noise(c, 128, 128, 30, 25);
   const grime = tex(gm, 1);
-  return { ground, containers, plate, concrete, hazard, belt, rustPanel, crack, sky, grime };
+  // placas de concreto com rejunte, rachaduras e manchas (piso do galpão e da arena)
+  const sl = canvas(512); c = sl.getContext('2d')!;
+  c.fillStyle = '#85827b'; c.fillRect(0, 0, 512, 512);
+  blotches(c, 512, 512, 70, ['#6f6b64', '#9b978e', '#5e5348', '#7a7266'], 10, 70, 31, 0.32);
+  const rs = rng(32);
+  for (let i = 0; i < 4; i++) for (let j = 0; j < 4; j++) { c.fillStyle = `rgba(${rs() > 0.5 ? 255 : 0},${rs() > 0.5 ? 255 : 0},${rs() > 0.5 ? 255 : 0},0.035)`; c.fillRect(i * 128, j * 128, 128, 128); }
+  c.strokeStyle = 'rgba(35,32,28,0.75)'; c.lineWidth = 3;
+  for (let i = 0; i <= 4; i++) { c.beginPath(); c.moveTo(i * 128, 0); c.lineTo(i * 128, 512); c.stroke(); c.beginPath(); c.moveTo(0, i * 128); c.lineTo(512, i * 128); c.stroke(); }
+  c.strokeStyle = 'rgba(200,195,185,0.25)'; c.lineWidth = 1;
+  for (let i = 0; i <= 4; i++) { c.beginPath(); c.moveTo(i * 128 + 2, 0); c.lineTo(i * 128 + 2, 512); c.stroke(); c.beginPath(); c.moveTo(0, i * 128 + 2); c.lineTo(512, i * 128 + 2); c.stroke(); }
+  c.strokeStyle = 'rgba(30,28,25,0.6)'; c.lineWidth = 1.5;
+  for (let k = 0; k < 9; k++) { c.beginPath(); let x = rs() * 512, y = rs() * 512; c.moveTo(x, y); for (let i = 0; i < 8; i++) { x += (rs() - 0.5) * 40; y += (rs() - 0.5) * 40; c.lineTo(x, y); } c.stroke(); }
+  blotches(c, 512, 512, 10, ['#1e1a16'], 10, 40, 33, 0.35);
+  noise(c, 512, 512, 22, 34);
+  const slab = tex(sl, 1);
+  // macro-ruído (escala grande) para quebrar a repetição do chão
+  const mc = canvas(256); c = mc.getContext('2d')!;
+  c.fillStyle = '#808080'; c.fillRect(0, 0, 256, 256);
+  blotches(c, 256, 256, 40, ['#ffffff', '#202020', '#c0c0c0', '#404040'], 20, 80, 41, 0.45);
+  blotches(c, 256, 256, 60, ['#ffffff', '#000000'], 6, 24, 42, 0.25);
+  const macro = tex(mc, 1, false);
+  return { slab, macro, ground, containers, plate, concrete, hazard, belt, rustPanel, crack, sky, grime };
 }

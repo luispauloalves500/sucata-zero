@@ -5,6 +5,8 @@ import { LevelBuilder, NavGrid, boxGeo, type AABB } from './builder';
 import { makeTextures, type TexSet } from './textures';
 import { Gate, Plate, Conveyor, Press, Column } from './dynamic';
 import { rng } from '../core/math';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
+import { dressW01, type Dressing } from './dressing';
 
 export type InteractKind = 'terminal' | 'crate' | 'conductor' | 'panel' | 'cage' | 'tool' | 'memory' | 'lever' | 'anchor' | 'cache' | 'pickup';
 export interface Interactable { id: string; kind: InteractKind; pos: THREE.Vector3; label: string; obj?: THREE.Object3D; used: boolean; radius: number; hidden?: boolean; data?: any }
@@ -22,6 +24,7 @@ export interface Level {
   lights: THREE.PointLight[]; sun: THREE.DirectionalLight; hemi: THREE.HemisphereLight;
   cage: THREE.Group; anchorDoors: THREE.Group[]; elevatorPlatform?: THREE.Object3D;
   bossCenter: THREE.Vector3; arenaRadius: number;
+  dressing: Dressing;
 }
 
 export function buildW01(scene: THREE.Scene, physics: Physics, quality: { propDensity: number; shadows: boolean; shadowSize: number; drawDistance: number }): Level {
@@ -73,7 +76,7 @@ export function buildW01(scene: THREE.Scene, physics: Physics, quality: { propDe
   sunDisc.position.set(-160, 120, 260); sunDisc.lookAt(0, 0, 0); sky.add(sunDisc);
   scene.fog = new THREE.Fog(0xc6a07c, 35, quality.drawDistance);
   scene.background = new THREE.Color(0xc6a07c);
-  const hemi = new THREE.HemisphereLight(0xbfd4e6, 0x6b4a32, 1.15); scene.add(hemi);
+  const hemi = new THREE.HemisphereLight(0xbfd4e6, 0x6b4a32, 0.55); scene.add(hemi);
   const sun = new THREE.DirectionalLight(0xffe0b8, 2.6);
   sun.position.set(-30, 45, 40);
   sun.castShadow = quality.shadows;
@@ -149,7 +152,9 @@ export function buildW01(scene: THREE.Scene, physics: Physics, quality: { propDe
     }
     if (collide) { B.colliders.push(physics.addCylinder(x, h * 0.35, z, h * 0.35, r * 0.72)); B.addObstacle(x, h * 0.35, z, r * 1.4, h * 0.7, r * 1.4); }
   };
+  const lampSpots: { x: number; y: number; z: number; color: number }[] = [];
   const lamp = (x: number, z: number, real = false) => {
+    lampSpots.push({ x: x + 1.1, y: 5.8, z, color: 0x39f0ff });
     B.addGeo(new THREE.CylinderGeometry(0.09, 0.12, 6, 8), mats.dark, { x, y: 3, z });
     B.addGeo(boxGeo(1.4, 0.12, 0.2, 1), mats.dark, { x: x + 0.6, y: 5.95, z });
     B.addGeo(boxGeo(0.5, 0.12, 0.3, 1), mats.teal, { x: x + 1.1, y: 5.85, z }, 0, 0, 1, false);
@@ -451,7 +456,7 @@ export function buildW01(scene: THREE.Scene, physics: Physics, quality: { propDe
   // piso de concreto da arena
   const arenaFloor = new THREE.Mesh(new THREE.CircleGeometry(AR, 48), mats.concrete);
   (mats.concrete.map as THREE.Texture).repeat.set(1, 1);
-  const cf = mats.concrete.clone(); cf.map = tex.concrete.clone(); cf.map.repeat.set(8, 8); cf.map.needsUpdate = true; arenaFloor.material = cf;
+  const cf = mats.concrete.clone(); cf.map = tex.slab.clone(); cf.map.repeat.set(AR / 4, AR / 4); cf.map.offset.set(0.5, 0.5); cf.map.needsUpdate = true; cf.bumpMap = cf.map; cf.bumpScale = 1.2; cf.roughness = 0.78; arenaFloor.material = cf;
   arenaFloor.rotation.x = -Math.PI / 2; arenaFloor.position.set(bc.x, 0.02, bc.z); arenaFloor.receiveShadow = true; scene.add(arenaFloor);
   const ringM = new THREE.Mesh(new THREE.RingGeometry(AR - 1.2, AR - 0.6, 64), mats.hazard); ringM.rotation.x = -Math.PI / 2; ringM.position.set(bc.x, 0.03, bc.z); scene.add(ringM);
   const columns: Column[] = [];
@@ -489,6 +494,7 @@ export function buildW01(scene: THREE.Scene, physics: Physics, quality: { propDe
   // =====================================================================
   // pano de fundo: montanhas de sucata, guindastes gigantes, cidade ao norte
   // =====================================================================
+  const far = new THREE.Group();
   const farR = rng(77);
   for (let i = 0; i < 26; i++) {
     const side = i % 2 ? 1 : -1;
@@ -498,7 +504,7 @@ export function buildW01(scene: THREE.Scene, physics: Physics, quality: { propDe
     for (let k = 0; k < p.count; k++) p.setXYZ(k, p.getX(k) * (0.8 + farR() * 0.4), Math.max(-0.1, p.getY(k)), p.getZ(k) * (0.8 + farR() * 0.4));
     g.computeVertexNormals();
     const s = 10 + farR() * 18;
-    const m = new THREE.Mesh(g, farR() > 0.5 ? mats.far : mats.far2); m.scale.set(s * 1.4, s * (0.6 + farR() * 0.5), s); m.position.set(x, 0, z); props.add(m);
+    const m = new THREE.Mesh(g, farR() > 0.5 ? mats.far : mats.far2); m.scale.set(s * 1.4, s * (0.6 + farR() * 0.5), s); m.position.set(x, 0, z); far.add(m);
   }
   for (let i = 0; i < 5; i++) {
     const x = (i % 2 ? 1 : -1) * (70 + i * 9), z = 20 + i * 45;
@@ -506,23 +512,30 @@ export function buildW01(scene: THREE.Scene, physics: Physics, quality: { propDe
     const tower = new THREE.Mesh(boxGeo(2, 40, 2, 0.2), mats.far2); tower.position.y = 20; cg.add(tower);
     const jib = new THREE.Mesh(boxGeo(36, 1.6, 1.6, 0.2), mats.far2); jib.position.set(-Math.sign(x) * 12, 40, 0); cg.add(jib);
     const cab = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 0.1, 18), mats.far2); cab.position.set(-Math.sign(x) * 24, 31, 0); cg.add(cab);
-    cg.rotation.y = farR() * 0.6; props.add(cg);
+    cg.rotation.y = farR() * 0.6; far.add(cg);
   }
   // cabeça de robô gigante tombada (narrativa ambiental)
   const head = new THREE.Group(); head.position.set(-62, 0, 120); head.rotation.set(0.3, 0.8, 0.25);
   const hb = new THREE.Mesh(boxGeo(22, 16, 18, 0.1), mats.far); hb.position.y = 6; head.add(hb);
   const eyeM = new THREE.MeshStandardMaterial({ color: 0x220a06, emissive: 0x6a1408, emissiveIntensity: 1.2 });
   for (const sx of [-5, 5]) { const e = new THREE.Mesh(new THREE.CylinderGeometry(2.6, 2.6, 1, 16), eyeM); e.rotation.x = Math.PI / 2; e.position.set(sx, 8, 9.2); head.add(e); }
-  props.add(head);
+  far.add(head);
   // skyline da Cidade Morta ao norte
   const cityM = new THREE.MeshStandardMaterial({ color: 0x55606c, roughness: 1, emissive: 0x111820, emissiveIntensity: 0.4 });
   const winM = new THREE.MeshStandardMaterial({ color: 0xffb040, emissive: 0xff9a2a, emissiveIntensity: 1.6 });
   for (let i = 0; i < 34; i++) {
     const x = -150 + i * 9 + farR() * 5, z = 300 + farR() * 60, h = 25 + farR() * 75, w = 7 + farR() * 9;
-    const b = new THREE.Mesh(boxGeo(w, h, w, 0.1), cityM); b.position.set(x, h / 2 - 4, z); props.add(b);
-    if (farR() > 0.5) { const wnd = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 1.2), winM); wnd.position.set(x + (farR() - 0.5) * w * 0.6, h * (0.3 + farR() * 0.5), z - w / 2 - 0.05); wnd.rotation.y = Math.PI; props.add(wnd); }
+    const b = new THREE.Mesh(boxGeo(w, h, w, 0.1), cityM); b.position.set(x, h / 2 - 4, z); far.add(b);
+    if (farR() > 0.5) { const wnd = new THREE.Mesh(new THREE.PlaneGeometry(1.2, 1.2), winM); wnd.position.set(x + (farR() - 0.5) * w * 0.6, h * (0.3 + farR() * 0.5), z - w / 2 - 0.05); wnd.rotation.y = Math.PI; far.add(wnd); }
   }
-  // poeira suspensa: partículas instanciadas grandes (baratas)
+  // funde o pano de fundo por material (antes: ~110 draw calls individuais)
+  far.updateMatrixWorld(true);
+  const farBuckets = new Map<THREE.Material, THREE.BufferGeometry[]>();
+  far.traverse((o) => { const m = o as THREE.Mesh; if (!m.isMesh) return; let g = m.geometry.clone().applyMatrix4(m.matrixWorld); if (g.index) g = g.toNonIndexed(); for (const k of Object.keys(g.attributes)) if (!['position', 'normal'].includes(k)) g.deleteAttribute(k); const mat = m.material as THREE.Material; const arr = farBuckets.get(mat) ?? []; arr.push(g); farBuckets.set(mat, arr); });
+  for (const [mat, geos] of farBuckets) { const g = mergeGeometries(geos); if (!g) continue; const mm = new THREE.Mesh(g, mat); mm.matrixAutoUpdate = false; scene.add(mm); }
+  // ambientação (decalques, detritos, mato, luz falsa, galpão, arena, poeira, fumaça)
+  const avoid = [...interactables.map((i) => ({ x: i.pos.x, z: i.pos.z, r: 1.8 })), ...terminals.map((t) => ({ x: t.pos.x, z: t.pos.z, r: 3.2 })), { x: -3, z: -9.5, r: 3 }, { x: 0, z: 163, r: 3 }, { x: -7, z: 81, r: 3.5 }, { x: 7, z: 81, r: 3.5 }];
+  const dressing = dressW01({ scene, B, physics, tex, mats, quality, avoid, lamps: lampSpots, animated, bossCenter: bc, arenaRadius: AR });
   B.finish(scene);
   // corrige rampa visual (inclinação)
   const rampMesh = new THREE.Mesh(boxGeo(5.9, 0.24, 2.4, 0.5), mats.plate);
@@ -571,5 +584,5 @@ export function buildW01(scene: THREE.Scene, physics: Physics, quality: { propDe
     { id: 'E', name: 'Depósito da Prensa', minZ: 172.4, maxZ: 240, music: 'exploration' },
   ];
   // sombra do sol acompanha o jogador (atualizado pelo jogo)
-  return { builder: B, nav, tex, gates, plates, conveyors, presses, columns, interactables, triggers, spawns, sectors, terminals, markers, mats, animated, lights, sun, hemi, cage, anchorDoors, bossCenter: bc, arenaRadius: AR };
+  return { builder: B, nav, tex, gates, plates, conveyors, presses, columns, interactables, triggers, spawns, sectors, terminals, markers, mats, animated, lights, sun, hemi, cage, anchorDoors, bossCenter: bc, arenaRadius: AR, dressing };
 }

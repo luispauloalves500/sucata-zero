@@ -60,7 +60,9 @@ export class LevelBuilder {
         for (const g of geos) {
           g.computeBoundingBox();
           const c = g.boundingBox!.getCenter(new THREE.Vector3());
-          const key = `${Math.floor(c.x / 40)}:${Math.floor(c.z / 40)}`;
+          // transparentes (decalques) num lote só; opacos em blocos de 40 m para o culling funcionar
+          const cs = mat.transparent ? 1000 : 40;
+          const key = `${Math.floor(c.x / cs)}:${Math.floor(c.z / cs)}`;
           const a = chunks.get(key) ?? []; a.push(g); chunks.set(key, a);
         }
         for (const list of chunks.values()) {

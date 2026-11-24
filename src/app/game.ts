@@ -9,6 +9,7 @@ import { TouchControls } from '../input/touch';
 import { AudioManager } from '../audio/audio';
 import { Particles, Telegraphs } from '../fx/particles';
 import { Beacon } from '../fx/beacon';
+import { makeEnvironment } from '../engine/env';
 import { EventBus } from '../core/events';
 import { newGame, type GameState } from '../game/state';
 import { computeStats, equip as doEquip, unequip as doUnequip, craft as doCraft, upgrade as doUpgrade, dismantle as doDismantle, findPart, grantPart, grantMaterials, type Stats } from '../items/inventory';
@@ -94,6 +95,7 @@ export class Game implements GameCtx {
       await new Promise((r) => setTimeout(r, 0));
       const prof = this.renderer.profile;
       this.level = buildW01(this.scene, this.physics, { propDensity: prof.propDensity, shadows: prof.shadows, shadowSize: prof.shadowSize, drawDistance: prof.drawDistance });
+      try { this.scene.environment = makeEnvironment(this.renderer.r, this.level.tex.sky); } catch (e) { console.warn('env map', e); }
       this.fx = new Particles(this.scene); this.fx.density = prof.particles;
       this.tele = new Telegraphs(this.scene);
       this.beacon = new Beacon(this.scene, 0xffa62b, 18);
@@ -1087,11 +1089,26 @@ export class Game implements GameCtx {
     sun.position.set(c.x - 30, c.y + 45, c.z + 40); sun.target.position.set(c.x, 0, c.z); sun.target.updateMatrixWorld();
     for (const a of this.level.animated) a.fn(a.obj, this.time + (this.mode === 'title' ? performance.now() / 1000 : 0));
     for (const cv of this.level.conveyors) cv.tex.offset.y -= cv.push.x * realDt * 0.25;
-    if (this.mode === 'play' || this.mode === 'dead') { this.fx.update(dt); this.tele.update(dt); }
+    if (this.mode === 'play' || this.mode === 'dead') { this.fx.update(dt); this.tele.update(dt); this.ambientFx(dt); }
     this.audio.update(realDt);
     if (this.mode === 'play' || this.mode === 'dead') this.updateHud(realDt);
-    this.renderer.r.render(this.scene, this.cam.cam);
+    this.renderer.render(this.scene, this.cam.cam, this.time);
   }
+  ambT = 0;
+  /** faíscas de cabos rompidos e vapor da prensa perto do jogador; giroflex da arena na luta */
+  ambientFx(dt: number) {
+    const D = this.level.dressing; if (!D) return;
+    this.ambT -= dt;
+    if (this.ambT <= 0) {
+      this.ambT = 0.35 + Math.random() * 0.5;
+      const p = this.player.pos;
+      for (const s of D.sparkSpots) if (s.distanceTo(p) < 40 && Math.random() < 0.35) this.fx.burst('sparks', s, 6 + Math.floor(Math.random() * 8));
+      for (const s of D.steamSpots) if (s.distanceTo(p) < 70) this.fx.burst('smoke', s, 2);
+    }
+    const alarm = this.bossFight;
+    if (alarm !== this.alarmOn) { this.alarmOn = alarm; D.setAlarm(alarm); }
+  }
+  alarmOn = false;
   waypointPos(key: string): THREE.Vector3 | null {
     const p = this.player.pos;
     if (key === 'drop') return this.loot.drops.find((d) => !d.grantId.includes('P03') && !d.grantId.includes('P18'))?.pos ?? null;

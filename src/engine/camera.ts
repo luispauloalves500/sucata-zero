@@ -64,7 +64,16 @@ export class CameraRig {
     // muito perto (parede atrás): sobe a câmera por cima do ombro em vez de entrar no personagem
     this.closeness = clamp(1 - (this.curDist - 0.6) / Math.max(0.1, dist * 0.45 - 0.6), 0, 1);
     const pos = pivot.clone().addScaledVector(back, this.curDist);
-    pos.y += this.closeness * 0.75;
+    if (physics) {
+      // sobe por cima do ombro (limitado pelo teto) e afasta de paredes laterais muito próximas
+      const lift = this.closeness * 0.75;
+      if (lift > 0.01) { const up = physics.rayStatic(pos.x, pos.y, pos.z, 0, 1, 0, lift + 0.3); pos.y += up === null ? lift : Math.max(0, up - 0.3); }
+      const pad = 0.38;
+      for (const sgn of [1, -1]) {
+        const h = physics.rayStatic(pos.x, pos.y, pos.z, right.x * sgn, 0, right.z * sgn, pad);
+        if (h !== null) pos.addScaledVector(right, -sgn * (pad - h));
+      }
+    }
     this.lookAt.copy(pivot).addScaledVector(back, -6);
     if (this.lockTarget) this.lookAt.lerp(this.lockTarget, 0.25);
     if (this.override) {
