@@ -49,6 +49,8 @@ export class Particles {
   burst(kind: 'sparks' | 'dust' | 'smoke' | 'hit' | 'heavy' | 'scrap' | 'electric' | 'debris' | 'weld' | 'acidless', p: { x: number; y: number; z: number }, n = 10, dir?: THREE.Vector3) {
     const count = Math.max(1, Math.round(n * this.density));
     const r = Math.random;
+    // clarão de impacto (1 partícula grande e curtíssima — some com o bloom)
+    if (kind === 'hit' || kind === 'heavy') this.spawn(p, { x: 0, y: 0, z: 0 }, 0xfff4d8, kind === 'heavy' ? 0.9 : 0.5, kind === 'heavy' ? 0.12 : 0.08, { drag: 0, glow: 4, grow: 0.6 });
     for (let k = 0; k < count; k++) {
       switch (kind) {
         case 'sparks': case 'weld':

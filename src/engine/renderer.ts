@@ -7,7 +7,7 @@ import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 
 /** passe final único: ACES + gradação quente/fria + vinheta + grão leve + sRGB */
 const FinalShader = {
-  uniforms: { tDiffuse: { value: null }, exposure: { value: 1.05 }, vignette: { value: 0.32 }, time: { value: 0 }, saturation: { value: 1.08 } },
+  uniforms: { tDiffuse: { value: null }, exposure: { value: 1.05 }, vignette: { value: 0.32 }, time: { value: 0 }, saturation: { value: 1.12 } },
   vertexShader: `varying vec2 vUv; void main(){ vUv=uv; gl_Position=projectionMatrix*modelViewMatrix*vec4(position,1.0); }`,
   fragmentShader: `uniform sampler2D tDiffuse; uniform float exposure; uniform float vignette; uniform float time; uniform float saturation; varying vec2 vUv;
     vec3 szFit(vec3 v){ vec3 a=v*(v+0.0245786)-0.000090537; vec3 b=v*(0.983729*v+0.4329510)+0.238081; return a/b; }
@@ -21,6 +21,7 @@ const FinalShader = {
       c = szAces(c);
       float l = dot(c, vec3(0.299,0.587,0.114));
       c = mix(vec3(l), c, saturation);
+      c = mix(c, c*c*(3.0-2.0*c), 0.28);
       // sombras levemente frias, altas luzes quentes (poeira do ferro-velho)
       c += vec3(0.018,0.006,-0.016) * smoothstep(0.35,1.0,l) + vec3(-0.012,0.0,0.014) * (1.0-smoothstep(0.0,0.35,l));
       vec2 d = vUv-0.5; float v = 1.0 - dot(d,d)*vignette*2.2;

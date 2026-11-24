@@ -350,11 +350,11 @@ export function dressW01(c: DressCtx): Dressing {
       const a = (i / 6) * Math.PI * 2 + Math.PI / 6;
       const x = bc.x + Math.sin(a) * (AR + 1.3), z = bc.z + Math.cos(a) * (AR + 1.3);
       const g = new THREE.Group(); g.position.set(x, 5.25, z);
-      const base = new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.26, 0.18, 12), mats.dark); g.add(base);
+      const base = new THREE.Mesh(new THREE.CylinderGeometry(0.36, 0.4, 0.2, 12), mats.dark); g.add(base);
       const lm = new THREE.MeshStandardMaterial({ color: 0xffa62b, emissive: 0xffa62b, emissiveIntensity: 2.2, roughness: 0.3, transparent: true, opacity: 0.9 });
       alarmMats.push(lm);
-      const dome = new THREE.Mesh(new THREE.SphereGeometry(0.2, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), lm); dome.position.y = 0.09; g.add(dome);
-      const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.1, 1.4, 5, 16, 1, true).translate(0, -2.5, 0).rotateZ(Math.PI / 2), volMat(0xffa62b, 0.25)); beam.position.y = 0.2; g.add(beam); alarmCones.push(beam);
+      const dome = new THREE.Mesh(new THREE.SphereGeometry(0.34, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), lm); dome.position.y = 0.09; g.add(dome);
+      const beam = new THREE.Mesh(new THREE.CylinderGeometry(0.15, 2.2, 7, 16, 1, true).translate(0, -3.5, 0).rotateZ(Math.PI / 2), volMat(0xffa62b, 0.4)); beam.position.y = 0.25; g.add(beam); alarmCones.push(beam);
       scene.add(g);
       c.animated.push({ obj: beam, fn: (o, t) => { o.rotation.y = t * 3 + i; } });
     }

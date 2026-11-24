@@ -83,9 +83,11 @@ process.on('unhandledRejection', (e) => { console.log(results.join('\n')); conso
   await shot(page, '03-combate-garra');
   await S(page, () => __SZ.damageEnemyTag('e02_quest', 999)); await wait(page, 900);
   ok('1-2: patrulheiro derrotado', (await S(page, () => __SZ.quest('1-2'))).stage >= 2);
-  await until(page, () => { const d = __SZ.drops(); return d.some((x) => x.itemId === 'P11') && d.some((x) => x.itemId === 'P02'); });
+  // a peça pode cair já ao alcance e ser recolhida na hora: vale estar no chão OU no inventário
+  await until(page, () => { const h = (id) => __SZ.drops().some((x) => x.itemId === id) || __SZ.state().inventory.parts.some((p) => p.itemId === id); return h('P11') && h('P02'); }, undefined, 25000);
   const drops = await S(page, () => __SZ.drops());
-  ok('1-2: peças P11 e P02 caem', drops.some((d) => d.itemId === 'P11') && drops.some((d) => d.itemId === 'P02'));
+  const inv12 = (await S(page, () => __SZ.state())).inventory.parts;
+  ok('1-2: peças P11 e P02 caem', ['P11', 'P02'].every((id) => drops.some((d) => d.itemId === id) || inv12.some((p) => p.itemId === id)));
   await shot(page, '04-peca-no-chao');
   for (const d of drops.filter((x) => x.itemId !== 'P03')) { await tp(page, d.x, 0.1, d.z, 0); await wait(page, 250); }
   ok('1-2: Punho Rebitador coletado', (await S(page, () => __SZ.state())).inventory.parts.some((p) => p.itemId === 'P11'));
@@ -133,6 +135,21 @@ process.on('unhandledRejection', (e) => { console.log(results.join('\n')); conso
   ok('1-4: oficina do hub', (await S(page, () => __SZ.interactNearest())) === 'bench_hub');
   await wait(page, 500); await closeMenus(page);
   ok('1-4 concluída e portão do chefe aberto', (await S(page, () => __SZ.quest('1-4'))).state === 'complete' && (await S(page, () => __SZ.gate('gate_boss'))));
+  // tarefas secundárias S01 (ferramentas) e S02 (guindaste) — liberadas pela 1-4
+  ok('S01 e S02 ativas após a 1-4', (await S(page, () => __SZ.quest('S01')))?.state === 'active' && (await S(page, () => __SZ.quest('S02')))?.state === 'active');
+  await wait(page, 600);
+  ok('S01: marcador secundário aponta uma ferramenta', await S(page, () => { const e = document.querySelector('.hud-way.side'); return !!e && getComputedStyle(e).display !== 'none'; }));
+  for (const [x, z] of [[19, 15], [-9, 74], [19.5, 129]]) {
+    await tp(page, x, 0.1, z - 1.2, 0); await wait(page, 350);
+    await S(page, () => __SZ.interactNearest()); await wait(page, 400);
+  }
+  ok('S01 concluída (3 ferramentas)', (await S(page, () => __SZ.quest('S01'))).state === 'complete', JSON.stringify(await S(page, () => __SZ.quest('S01'))));
+  await tp(page, -21.5, 0.1, 93.6, 0); await wait(page, 400);
+  ok('S02: cabine do guindaste ao alcance', (await S(page, () => __SZ.interactNearest())) === 'crane_lever');
+  await wait(page, 2600);
+  await shot(page, '09b-guindaste');
+  ok('S02 concluída (projeto do Martelo de Prensa)', (await S(page, () => __SZ.quest('S02'))).state === 'complete' && (await S(page, () => __SZ.state())).blueprints.includes('P12'));
+  await tp(page, 0, 0.1, 150, 0); await wait(page, 400);
   // fabricação
   await S(page, () => __SZ.grant({ scrap: 400, alloy: 4 }));
   await S(page, () => __SZ.openWorkshop('full')); await wait(page, 500);

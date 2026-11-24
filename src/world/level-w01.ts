@@ -490,6 +490,11 @@ export function buildW01(scene: THREE.Scene, physics: Physics, quality: { propDe
   trigger('r_end', 0, 1.5, 226, 8, 3, 3);
   interact('mem_m5', 'memory', -2.5, 0, 225, 'Registro de memória', memoryObj(-2.5, 0, 225), { memory: 'm5' });
   lamp(-7, 186); lamp(9, 186);
+  // montanhas de sucata emoldurando a arena (aparecem acima do anel de contêineres)
+  for (let i = 0; i < 9; i++) {
+    const a = (i / 9) * Math.PI * 2 + 0.35; if (Math.abs(Math.cos(a)) > 0.85) continue;
+    scrapPile(bc.x + Math.sin(a) * (AR + 9 + R() * 3), bc.z + Math.cos(a) * (AR + 9 + R() * 3), 4.5 + R() * 2, 6 + R() * 3, false);
+  }
 
   // =====================================================================
   // pano de fundo: montanhas de sucata, guindastes gigantes, cidade ao norte
