@@ -10,6 +10,7 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --port 4173",
     "test": "vitest run",
+    "test:movimento": "node tests/browser/movement.mjs",
     "e2e": "node tests/browser/e2e.mjs"
   },
   "dependencies": {

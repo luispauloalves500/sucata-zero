@@ -97,3 +97,8 @@ Próximo marco: **Episódio 2 — Cidade Morta** (mundo 2 do GDD).
 ## 5. Política para marcar conclusão
 
 Não marcar como concluído por ter escrito código, gerado imagem, compilado parcialmente ou enviado arquivo não testado. Toda conclusão precisa de evidência correspondente; se ainda não houver ambiente ou acesso para testar, indicar explicitamente `não testado` e pendência.
+
+## QA-003 — engasgo ao andar (corrigido)
+- Causa: chão era um cuboide gigante (600×600 m) e o jogador era empurrado contra ele (vel.y = -2) a cada passo; o KCC do Rapier afundava a cápsula 1–8 cm e zerava o deslocamento horizontal em vários passos seguidos. Além disso o modelo não era interpolado entre passos físicos de 60 Hz (quadros congelados/tremidos).
+- Correção: `physics.addGround` (heightfield plano), sem empurrão para baixo no chão (snap-to-ground cuida das descidas), interpolação prevPos→pos pelo acumulador, filtro de ±3 cm no Y visual.
+- Regressão: `npm run test:movimento` (tests/browser/movement.mjs; MOBILE=1 para celular).
