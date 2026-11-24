@@ -46,5 +46,23 @@ Legenda de prioridade: **P0** quebra/impede · **P1** prejudica muito a experiê
 9. Celular: legenda embaixo, marcador sem cobrir o HUD.
 10. Bug do guindaste no load; S01/S02 no e2e.
 
-## 4. Resultado
-Ver seção "Status após o ciclo QA-002" no fim deste documento (preenchida ao final do ciclo).
+## 4. Status após o ciclo QA-002 (24/11/2026)
+
+| # | Status | O que foi feito |
+|---|---|---|
+| 1 | ✅ corrigido | `CameraRig`: sobe por cima do ombro quando a parede encurta a distância (limitado pelo teto), afasta de paredes laterais a < 0,38 m e o modelo do Z-01 é ocultado se a câmera ficar a < 0,95 m dele. |
+| 2 | ✅ corrigido | Marcador secundário ciano para a tarefa ativa mais próxima (ferramenta mais próxima / cabine do guindaste, até 70 m) + feixes de luz ciano sobre os objetos das tarefas. Waypoint `tool` implementado. |
+| 3 | ✅ melhorado | Chão com macro-variação em shader (2 escalas, também na rugosidade) + relevo (bump); ~46 manchas de terra, ~34 de óleo, poças reflexivas, queimados, trilhas de pneu, drenos e setas pintadas indicando o caminho. |
+| 4 | ✅ melhorado | Environment map procedural (PMREM) para metais; bloom + passe final único (ACES, contraste, saturação, sombras frias/altas quentes, vinheta, grão) nos perfis médio/alto; poças e cones de luz sob todas as lâmpadas; faíscas/impactos com brilho HDR. |
+| 5 | ✅ melhorado | Galpão com telhado de chapa, cumeeira, caibros, claraboias com raios de luz, piso de concreto em placas com faixas amarelas, prateleiras de peças (com colisão), correntes, calha de cabos e faíscas. |
+| 6 | ✅ melhorado | Arena: piso em placas com rachaduras, dreno central com anel de perigo, queimados/óleo/poças, carcaças achatadas, 6 giroflex (âmbar → vermelho durante a luta), 4 torres de holofote com feixes, Prensa Central animada ao fundo com vapor, chaminé com fumaça, montanhas de sucata emoldurando. |
+| 7 | ✅ corrigido | Celular: legenda na base entre joystick e botões; marcador nunca cobre barras nem o painel de objetivo. |
+| 8 | ✅ melhorado | Poeira em suspensão que acompanha a câmera (1 draw call), 6 colunas de fumaça animadas na GPU, mato seco balançando ao vento (instanciado), detritos instanciados (porcas, chapas, canos, latas, tábuas, pneus, blocos). |
+| 9 | ✅ melhorado | Bump em contêineres, chapas, ferrugem e concreto. |
+| 10 | ✅ corrigido | Estado do guindaste (S02) restaurado ao carregar. |
+| 11 | ✅ corrigido | e2e cobre S01 (3 ferramentas) e S02 (guindaste + projeto P12) e verifica o marcador secundário; 2 testes unitários novos das tarefas. Teste "peças caem" deixou de ser instável (peça pode ser recolhida na hora). |
+| 12 | ✅ melhorado | Feixe de luz âmbar sobre o objetivo principal (some ao chegar perto e durante a luta com o chefe) + setas no chão. |
+| 13 | ⏳ pendente | Bundle continua 5,2 MB (Rapier embutido). Draw calls subiram (~450 no pior ponto, medido no e2e) — pano de fundo foi fundido por material e efeitos aditivos em lotes para compensar. FPS em hardware real ainda não medido. |
+| 14 | ✅ melhorado | Clarão de impacto em golpes (com bloom). |
+| 15 | ⏳ pendente | Malhas e animações dos modelos não foram refeitas neste ciclo (ganharam reflexos com o environment map). |
+| 16 | ⏳ pendente | Áudio não ouvido em dispositivo real. |

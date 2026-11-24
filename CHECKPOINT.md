@@ -1,8 +1,8 @@
 # SUCATA ZERO — CHECKPOINT DE DESENVOLVIMENTO
 
-> **Data inicial:** 16/11/2026 · **Última atualização:** 16/11/2026
-> **Estado:** EPISÓDIO 1 (FERRO-VELHO 09) IMPLEMENTADO, TESTADO EM CHROMIUM HEADLESS E PUBLICADO
-> **Documento principal:** `docs/GDD.md` (GDD v1.0) · análise: `ANALISE.md`
+> **Data inicial:** 16/11/2026 · **Última atualização:** 24/11/2026
+> **Estado:** EPISÓDIO 1 (FERRO-VELHO 09) IMPLEMENTADO, REVISADO (QA-002), TESTADO EM CHROMIUM HEADLESS E PUBLICADO
+> **Documento principal:** `docs/GDD.md` (GDD v1.0) · análise: `ANALISE.md` · revisão do Ep. 1: `docs/ANALISE-FASE1.md`
 > **Repositório GitHub:** https://github.com/luispauloalves500/sucata-zero
 > **Publicação:** https://luispauloalves500.github.io/sucata-zero/ (GitHub Actions → Pages)
 
@@ -25,11 +25,12 @@ Próximo marco: **Episódio 2 — Cidade Morta** (mundo 2 do GDD).
 | Montagem de peças (corpo muda) | ✅ | e2e: clique real na UI equipa P11; braço visível |
 | Oficina (equipar, fabricar, melhorar, desmontar) | ✅ | unit + e2e (fabricar Escudo de Porta) |
 | Missões 1-1…1-5 + chefe | ✅ | e2e completo até a tela final |
-| Secundárias S01/S02 | ⚠ implementadas, não cobertas pelo e2e | — |
+| Secundárias S01/S02 | ✅ | e2e (3 ferramentas, guindaste, projeto P12, marcador secundário) + unit |
 | Salvamento (IndexedDB, checksum, backup, migração, import/export) | ✅ | unit + e2e (recarregar página restaura estado) |
 | HUD PC/celular + controles de toque | ✅ | e2e mobile 844×390: joystick, pulo, interação |
 | Áudio (música generativa + SFX sintetizados) | ⚠ implementado, não ouvido em dispositivo real | — |
-| Desempenho 60 FPS em hardware real | ⚠ não medido (headless usa SwiftShader/CPU) | ~210 draw calls, ~38k triângulos na cena |
+| Desempenho 60 FPS em hardware real | ⚠ não medido (headless usa SwiftShader/CPU) | e2e: ~470 draw calls / ~136k triângulos no fim (inclui sombra e bloom); celular usa perfil baixo sem pós |
+| Ambientação / pós-processamento | ✅ | QA-002: env map, bloom+gradação, decalques, detritos, galpão com telhado, arena da Prensa — `/workspace/sucata-shots/v2/comparacao-antes-depois.jpg` |
 | Publicação | ✅ | URL pública HTTP 200, carrega sem erros |
 
 ## 2. Próxima tarefa: EP2.1 — Cidade Morta
@@ -40,6 +41,21 @@ Próximo marco: **Episódio 2 — Cidade Morta** (mundo 2 do GDD).
 4. Predefinições de montagem (presets) e mais slots de habilidade.
 
 ## 3. Histórico de ciclos
+
+### 2026-11-24 — QA-002: análise crítica e polimento do Episódio 1
+- Objetivo: analisar a fase 1 a fundo (bugs, navegação, visual, combate, HUD, celular, S01/S02) e corrigir/melhorar por prioridade.
+- Base/repositório/commit: `main` a partir de `0ce1683`.
+- Código e assets inspecionados: `src/world/*`, `src/app/game.ts`, `src/engine/*`, `src/ui/hud.ts`, `src/fx/particles.ts`, `src/models/*`, capturas `antes-*`.
+- Problema e causa: ver `docs/ANALISE-FASE1.md` (câmera atravessando o Z-01; tarefas secundárias sem marcador — waypoint `tool` inexistente; chão único repetido; sem env map/pós; galpão sem telhado; arena lisa; HUD do celular sobreposto; guindaste não restaurado no load; S01/S02 fora do e2e).
+- Arquivos alterados: `src/world/dressing.ts` (novo), `src/engine/env.ts` (novo), `src/fx/beacon.ts` (novo), `src/engine/renderer.ts`, `src/engine/camera.ts`, `src/world/level-w01.ts`, `src/world/textures.ts`, `src/world/builder.ts`, `src/fx/particles.ts`, `src/app/game.ts`, `src/ui/hud.ts`, `src/style.css`, `tests/browser/e2e.mjs`, `tests/browser/tour.mjs`, `tests/unit/core.test.ts`, `docs/ANALISE-FASE1.md`.
+- Mudanças implementadas: ver tabela de status em `docs/ANALISE-FASE1.md` §4.
+- Testes executados e resultados: `npm test` 22/22 ✔; `npm run validate` ✔; `npm run build` ✔; e2e Chromium headless desktop 1280×720 + celular 844×390: todas as verificações ✔ (inclui S01/S02, sem erros de console).
+- Testes visuais / dispositivos: tour fixo antes/depois (`/workspace/sucata-shots/v2/antes-*`, `depois-*`, `comparacao-antes-depois.jpg`, `depois-mobile-*`). Dispositivos reais: **não testado**.
+- Métricas reais: e2e ~470 draw calls/~136k triângulos (perfil médio, com sombra+bloom); FPS real **não medido**.
+- Regressões: nenhuma conhecida.
+- Deploy: sim — GitHub Pages via Actions (ver commit no histórico do git).
+- Pendências: medir FPS em GPU real/celular; retrabalho de malhas/animações; reduzir bundle (Rapier); áudio em dispositivo.
+- Próxima tarefa: EP2.1.
 
 ### 2026-11-16 — EP1-001: Episódio 1 jogável e publicado
 - Objetivo: construir e publicar o primeiro episódio completo do GDD com o loop central funcionando.
