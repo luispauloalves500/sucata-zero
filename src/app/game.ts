@@ -1147,12 +1147,15 @@ export class Game implements GameCtx {
       if (dist <= minDist || dist > maxDist) return null;
       // área segura: não cobre barras (topo-esquerda), objetivo (topo-direita) nem controles de toque (base)
       const top = touchUi ? 0.2 : 0.14, bot = touchUi ? 0.62 : 0.86;
-      if (pr.on && pr.z < 1) return { x: pr.x, y: clamp(pr.y, innerHeight * 0.06, innerHeight * bot), on: true, ang: 0, dist };
+      // não sobrepõe as barras (topo-esquerda) nem o painel de objetivo (topo-direita)
+      const avoidHud = (x: number, y: number) => ((x < innerWidth * 0.36 || x > innerWidth * 0.74) && y < innerHeight * (touchUi ? 0.24 : 0.17) ? innerHeight * (touchUi ? 0.24 : 0.17) : y);
+      if (pr.on && pr.z < 1) return { x: pr.x, y: avoidHud(pr.x, clamp(pr.y, innerHeight * 0.06, innerHeight * bot)), on: true, ang: 0, dist };
       let nx = pr.nx, ny = pr.ny; if (pr.z > 1) { nx = -nx; ny = -ny; }
       const ang = Math.atan2(-ny, nx);
       const m = 0.86, k = Math.min(m / Math.max(1e-3, Math.abs(Math.cos(ang))), m / Math.max(1e-3, Math.abs(Math.sin(ang))));
       const y = clamp((Math.sin(ang) * k * 0.5 + 0.5) * innerHeight, innerHeight * top, innerHeight * bot);
-      return { x: (Math.cos(ang) * k * 0.5 + 0.5) * innerWidth, y, on: false, ang, dist };
+      const x = (Math.cos(ang) * k * 0.5 + 0.5) * innerWidth;
+      return { x, y: avoidHud(x, y), on: false, ang, dist };
     };
     const waypoint = place(st?.waypoint ? this.waypointPos(st.waypoint) : null, 2.5);
     this.objectiveBeacon(st?.waypoint && !this.bossFight ? this.waypointPos(st.waypoint) : null);

@@ -208,7 +208,7 @@ kbd { display: inline-block; min-width: 1.6em; padding: 1px 6px; border: 1px sol
 .tb-pause { right: auto; left: calc(50% - 22px); top: calc(8px + var(--safe-t)); width: 44px; height: 44px; font-size: .9em; }
 body.touch .hud-obj { width: 15em; font-size: .9em; }
 body.touch .hud-toasts { bottom: calc(40% + var(--safe-b)); }
-body.touch .hud-say { bottom: calc(3% + var(--safe-b)); max-width: 44vw; font-size: calc(.92em * var(--sub-scale)); padding: 5px 12px; }
+body.touch .hud-say { bottom: calc(3% + var(--safe-b)); max-width: 40vw; font-size: calc(.92em * var(--sub-scale)); padding: 5px 12px; }
 body.touch #hud { font-size: calc(13px * var(--hud-scale)); }
 body.touch .workshop { padding-left: 30vw; }
 @media (max-height: 480px) { .screen h2 { font-size: 1.3em; margin-bottom: 6px; } .mbtn { padding: 7px 12px; font-size: .95em; } .menu { gap: 5px; } .logo span { font-size: 2.2em; } .logo b { font-size: 3em; } .wgrid { grid-template-columns: 1fr 1fr 1.3fr; font-size: .86em; } }
